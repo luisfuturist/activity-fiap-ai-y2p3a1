@@ -2,7 +2,7 @@
 
 ## PARTE 1 – Armazenamento e Processamento Local (Edge Computing)
 
-- [PARTE 1 - TODO.md](./part1/TODO.md)
+- [PARTE 1 - TODO.md](./part1/TODO.md) - **Em revisão**
 
 ## PARTE 2 – Transmissão para Nuvem e Visualização (Fog/Cloud)
 
