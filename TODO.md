@@ -4,7 +4,7 @@
 
 ### Desenvolvimento (Wokwi/ESP32)
 
-- [ ] Configurar projeto no Wokwi com ESP32.
+- [x] Configurar projeto no Wokwi com ESP32.
 - [ ] Adicionar sensor obrigatório: DHT22 (temperatura e umidade).
 - [ ] Adicionar segundo sensor (livre escolha, ex: botão para simular BPM, LDR, etc.).
 - [ ] Implementar leitura periódica dos sensores.
