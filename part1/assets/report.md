@@ -76,23 +76,23 @@ O sistema simula mudanças de conectividade a cada 30 segundos para demonstrar o
 
 ## Funcionalidades Implementadas
 
-### ✅ Leitura de Sensores
+### Leitura de Sensores
 - **DHT22**: Temperatura e umidade a cada 2 segundos
 - **Botão**: Simulação de batimentos cardíacos com debounce
 - **Cálculo de BPM**: Baseado em contagem de batimentos por intervalo
 
-### ✅ Armazenamento Local (SPIFFS)
+### Armazenamento Local (SPIFFS)
 - Serialização de dados em JSON
 - Persistência em arquivo local
 - Controle de capacidade máxima
 - Implementação de buffer circular
 
-### ✅ Resiliência Offline
+### Resiliência Offline
 - Coleta contínua independente da conectividade
 - Estratégia de armazenamento limitado (100 amostras)
 - Preservação de dados durante desconexões
 
-### ✅ Sincronização Automática
+### Sincronização Automática
 - Detecção automática de reconexão
 - Envio de dados armazenados para a nuvem
 - Limpeza do armazenamento local após sincronização
@@ -130,11 +130,11 @@ void implementCircularBuffer(String newData) {
 
 O sistema fornece logs detalhados via Serial Monitor:
 
-- ✅ Inicialização do SPIFFS
-- 📡 Status de conectividade WiFi
-- 💾 Confirmação de armazenamento local
-- 🔄 Sincronização de dados
-- ⚠️ Alertas de capacidade de armazenamento
+- Inicialização do SPIFFS
+- Status de conectividade WiFi
+- Confirmação de armazenamento local
+- Sincronização de dados
+- Alertas de capacidade de armazenamento
 
 ## Conclusão
 
@@ -149,6 +149,6 @@ O sistema está preparado para integração com protocolos de comunicação (MQT
 
 ---
 
-**Desenvolvido por**: Equipe CardioIA  
+**Desenvolvido por**: Gustavo Castro (RM560831), Luis Emidio (RM559976), Ricardo Oliveira (RM561182)
 **Data**: Outubro 2024  
 **Tecnologias**: ESP32, SPIFFS, ArduinoJson, Edge Computing
