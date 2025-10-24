@@ -122,7 +122,7 @@ A integração da **Parte 1 (Edge Computing)** com a **Parte 2 (MQTT + Node-RED)
 ## 8. Evidências do Sistema
 
 ### 8.1 Conexão com o Broker MQTT
-![Conexão com Broker MQTT] (https://github.com/user-attachments/assets/12fa3a54-8727-49c1-86ab-e6542d251ff0)
+![Conexão com Broker MQTT](assets/broker.jpg)
 
 
 ### 8.2 Terminal CMD - Envio de Dados
