@@ -2,7 +2,7 @@
 
 ## Resumo Executivo
 
-Este relatório descreve a implementação de um sistema de monitoramento cardíaco baseado em Edge Computing, utilizando ESP32 com sensores DHT22 e botão para simulação de batimentos cardíacos. O sistema implementa resiliência offline, armazenamento local via SPIFFS e sincronização automática de dados quando a conectividade é restabelecida.
+Este relatório descreve a implementação de um sistema de monitoramento cardíaco baseado em Edge Computing, utilizando ESP32 com sensores DHT22 e botão para simulação de batimentos cardíacos. O sistema implementa resiliência offline, armazenamento local via SD Card e sincronização automática de dados quando a conectividade é restabelecida.
 
 ## Arquitetura do Sistema
 
@@ -11,15 +11,39 @@ Este relatório descreve a implementação de um sistema de monitoramento cardí
 1. **ESP32 DevKit C v4**: Microcontrolador principal
 2. **DHT22**: Sensor de temperatura e umidade (pino 15)
 3. **Botão**: Simulação de batimentos cardíacos (pino 32)
-4. **SPIFFS**: Sistema de arquivos para armazenamento local
+4. **SD Card**: Armazenamento local (CS=5, MOSI=23, MISO=19, SCK=18)
 5. **ArduinoJson**: Biblioteca para serialização de dados
 
 ### Fluxo de Funcionamento
 
-```
-[Sensores] → [Leitura Periódica] → [Armazenamento SPIFFS] → [Verificação WiFi] → [Sincronização]
-     ↓              ↓                      ↓                      ↓                    ↓
-[DHT22 + Botão] → [JSON Data] → [Arquivo Local] → [isConnected] → [Cloud Sync]
+```mermaid
+flowchart TD
+    A[DHT22 Sensor<br/>🌡️ Temperature & Humidity] --> B[Data Collection<br/>📊 Every 2 seconds]
+    C[Button Press<br/>❤️ Heartbeat Simulation] --> B
+    
+    B --> D{WiFi Connected?}
+    
+    D -->|Yes| E[Send to Cloud<br/>☁️ Immediate Sync]
+    D -->|No| F[Store in SD Card<br/>💾 Local Storage]
+    
+    F --> G{Storage Full?<br/>100 samples}
+    G -->|Yes| H[Circular Buffer<br/>🔄 FIFO Strategy]
+    G -->|No| I[Append Data<br/>📝 JSON Format]
+    
+    H --> I
+    I --> J[Wait for WiFi<br/>⏳ Offline Mode]
+    
+    K[WiFi Reconnected<br/>📡 Connection Restored] --> L[Sync Stored Data<br/>🔄 Batch Upload]
+    L --> M[Clear Local Storage<br/>🗑️ Clean SD Card]
+    
+    E --> N[Data in Cloud<br/>✅ Successfully Synced]
+    M --> N
+    
+    style A fill:#e1f5fe
+    style C fill:#fce4ec
+    style E fill:#e8f5e8
+    style F fill:#fff3e0
+    style N fill:#f3e5f5
 ```
 
 ## Implementação de Resiliência Offline
@@ -35,7 +59,7 @@ O sistema implementa uma estratégia de **buffer circular** com as seguintes car
 ### Lógica de Resiliência
 
 1. **Modo Offline**:
-   - Dados são sempre armazenados localmente no SPIFFS
+   - Dados são sempre armazenados localmente no SD Card
    - Sistema continua coletando dados independente da conectividade
    - Implementa buffer circular quando limite é atingido
 
@@ -69,7 +93,7 @@ O sistema simula mudanças de conectividade a cada 30 segundos para demonstrar o
 }
 ```
 
-### Arquivos SPIFFS
+### Arquivos SD Card
 
 - `/sensor_data.json`: Dados dos sensores (formato JSON, uma linha por amostra)
 - `/sample_count.txt`: Contador de amostras armazenadas
@@ -81,7 +105,7 @@ O sistema simula mudanças de conectividade a cada 30 segundos para demonstrar o
 - **Botão**: Simulação de batimentos cardíacos com debounce
 - **Cálculo de BPM**: Baseado em contagem de batimentos por intervalo
 
-### Armazenamento Local (SPIFFS)
+### Armazenamento Local (SD Card)
 - Serialização de dados em JSON
 - Persistência em arquivo local
 - Controle de capacidade máxima
@@ -103,7 +127,7 @@ O sistema simula mudanças de conectividade a cada 30 segundos para demonstrar o
 
 Considerando:
 - **Frequência de coleta**: 1 amostra a cada 2 segundos
-- **Capacidade de armazenamento**: ~1MB disponível no SPIFFS
+- **Capacidade de armazenamento**: ~1MB disponível no SD Card
 - **Tamanho por amostra**: ~100 bytes (JSON)
 - **Duração offline**: ~3.3 minutos de dados (100 × 2s = 200s)
 
@@ -113,9 +137,11 @@ Esta estratégia garante que o sistema possa operar offline por períodos curtos
 
 ```cpp
 void implementCircularBuffer(String newData) {
-  // Remove entrada mais antiga (primeira linha)
-  // Adiciona nova entrada
-  // Mantém capacidade fixa
+  // Lê conteúdo atual do arquivo
+  // Remove a primeira linha (amostra mais antiga)
+  // Adiciona nova entrada ao final
+  // Regrava o arquivo com as linhas rotacionadas
+  // Mantém capacidade fixa (100 amostras)
 }
 ```
 
@@ -130,11 +156,27 @@ void implementCircularBuffer(String newData) {
 
 O sistema fornece logs detalhados via Serial Monitor:
 
-- Inicialização do SPIFFS
+- Inicialização do SD Card
 - Status de conectividade WiFi
 - Confirmação de armazenamento local
 - Sincronização de dados
 - Alertas de capacidade de armazenamento
+
+### Exemplos de Logs
+
+```
+🚀 CardioIA System Starting...
+✅ SD Card Ready
+📡 WiFi: DISCONNECTED
+✅ System Ready - DHT: 2s, BPM: 10s, WiFi: 30s
+🌡️ Measured: 25.3°C 45.2% BPM:72
+❤️ Beat: 1 (2s)
+💾 Stored locally (1/100)
+📡 WiFi: CONNECTED
+🔄 Syncing 5 samples...
+📤 Batch syncing 5 samples...
+✅ Synced 5 samples - local storage cleared
+```
 
 ## Conclusão
 
@@ -151,4 +193,4 @@ O sistema está preparado para integração com protocolos de comunicação (MQT
 
 **Desenvolvido por**: Gustavo Castro (RM560831), Luis Emidio (RM559976), Ricardo Oliveira (RM561182)
 **Data**: Outubro 2024  
-**Tecnologias**: ESP32, SPIFFS, ArduinoJson, Edge Computing
+**Tecnologias**: ESP32, SD Card, ArduinoJson, Edge Computing

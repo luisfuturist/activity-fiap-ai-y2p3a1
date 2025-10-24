@@ -18,20 +18,6 @@ part1/
 └── README.md                  # Este arquivo
 ```
 
-## Preparação do Ambiente
-
-1.  Instale o PlatformIO:
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install platformio
-    ```
-
-2. Rode o projeto:
-    ```bash
-    pio run
-    ```
-
 ## Link do Projeto no Wokwi
 
 Aqui está o link para o projeto Wokwi simulando o ESP32 com o sensor DHT22 para leitura de temperatura e umidade.
@@ -51,19 +37,56 @@ Aqui está o link para o projeto Wokwi simulando o ESP32 com o sensor DHT22 para
 3.  Pressione o botão verde para simular batimentos cardíacos.
 4.  Simule a mudança da temperatura e umidade do DHT22 alterando o valor dos sensores no painel de controle.
 
-**Funcionalidades Implementadas:**
+## Preparação do Ambiente no VSCode
 
-- ✅ Leitura periódica do sensor DHT22 (temperatura e umidade)
-- ✅ Simulação de batimentos cardíacos com botão
-- ✅ Cálculo de BPM (batimentos por minuto)
-- ✅ Exibição dos dados no monitor serial
-- ✅ Tratamento de erros de leitura do sensor
-- ✅ Debounce do botão para evitar leituras falsas
-- ✅ Simulação de conectividade WiFi
-- ✅ Armazenamento local com SPIFFS (Edge Computing)
-- ✅ Resiliência offline com buffer circular
-- ✅ Sincronização automática de dados
-- ✅ Estratégia de armazenamento limitado (100 amostras)
+Se você preferir testar o projeto localmente, você pode usar o VSCode com o PlatformIO e rodar o projeto no Wokwi com as mesmas instruções acima, mas antes de rodar o projeto, você precisa instalar as extensões [PlatformIO](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) e [Wokwi](https://marketplace.visualstudio.com/items?itemName=Wokwi.wokwi-vscode) no VSCode.
+
+1.  Instale o PlatformIO CLI (caso não tenha instalado):
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    pip install platformio
+    ```
+
+2. Compile o projeto:
+    ```bash
+    pio run
+    ```
+
+## Como Testar o Sistema
+
+### Teste de Funcionamento Offline
+1. **Aguarde o modo offline** (WiFi: DISCONNECTED)
+2. **Observe o acúmulo de dados**: `💾 Stored locally (X/100)`
+3. **Pressione o botão** para simular batimentos e ver `❤️ Beat: X`
+4. **Aguarde o cálculo de BPM**: `💓 BPM: X` a cada 10 segundos
+
+### Teste de Sincronização
+1. **Aguarde a conexão WiFi** (a cada 30s): `📡 WiFi: CONNECTED`
+2. **Observe a sincronização**: `🔄 Syncing X samples...`
+3. **Verifique o envio em lote**: `📤 Batch syncing X samples...`
+4. **Confirme a limpeza**: `✅ Synced X samples - local storage cleared`
+
+### Teste de Resiliência
+1. **Desconecte o WiFi** (aguarde 30s): `📡 WiFi: DISCONNECTED`
+2. **Continue coletando dados** offline
+3. **Reconecte** e veja a sincronização automática
+
+**Funcionalidades Implementadas e Testadas:**
+
+- ✅ **Leitura periódica do sensor DHT22** (temperatura e umidade a cada 2s)
+- ✅ **Simulação de batimentos cardíacos** com botão (cálculo de BPM a cada 10s)
+- ✅ **Cálculo de BPM** (batimentos por minuto) baseado em pulsos do botão
+- ✅ **Exibição dos dados** no monitor serial com emojis e formatação clara
+- ✅ **Tratamento de erros** de leitura do sensor DHT22
+- ✅ **Debounce do botão** para evitar leituras falsas (50ms)
+- ✅ **Simulação de conectividade WiFi** (alterna a cada 30s)
+- ✅ **Armazenamento local no SD Card** (Edge Computing)
+- ✅ **Resiliência offline** com buffer circular (100 amostras)
+- ✅ **Sincronização automática** de dados quando WiFi conecta
+- ✅ **Estratégia FIFO** com buffer circular para gerenciar limite de amostras
+- ✅ **Sincronização em lote** eficiente (envia todos os dados de uma vez)
+- ✅ **Limpeza automática** do armazenamento local após sincronização
 
 ## Relatório
 

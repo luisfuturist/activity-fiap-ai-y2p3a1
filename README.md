@@ -12,10 +12,11 @@ O CardioIA é um projedo simples didático de um sistema de monitoramento cardí
 
 Este repositório contém a implementação da **Fase 3** do projeto CardioIA, focada no desenvolvimento de um sistema de monitoramento contínuo que:
 
-- Captura sinais vitais simulados (batimentos cardíacos, temperatura, umidade e movimento)
-- Armazena e processa informações localmente (Edge Computing)
-- Transmite dados para a nuvem via MQTT
-- Exibe resultados em dashboards interativos com alertas automáticos
+- ✅ **Captura sinais vitais simulados** (batimentos cardíacos, temperatura, umidade)
+- ✅ **Armazena e processa informações localmente** (Edge Computing com SD Card)
+- ✅ **Resiliência offline** com sincronização automática quando conecta
+- ✅ **Transmite dados para a nuvem** via MQTT (Parte 2)
+- ✅ **Exibe resultados em dashboards** interativos com alertas automáticos (Parte 2)
 
 ---
 
@@ -24,10 +25,13 @@ Este repositório contém a implementação da **Fase 3** do projeto CardioIA, f
 ### Parte 1 — Armazenamento e processamento local (Edge Computing)
 
 Desenvolvimento no Wokwi com ESP32, incluindo:
-- 2 sensores (DHT22 obrigatório + sensor de livre escolha)
-- Armazenamento local no SPIFFS
-- Simulação de conectividade Wi-Fi
-- Resiliência offline
+- ✅ **2 sensores**: DHT22 (temperatura/umidade) + Botão (batimentos cardíacos)
+- ✅ **Armazenamento local no SD Card** com buffer circular (100 amostras)
+- ✅ **Simulação de conectividade Wi-Fi** (alterna a cada 30s)
+- ✅ **Resiliência offline** com sincronização automática
+- ✅ **Sincronização em lote** eficiente quando conecta
+
+**Link Wokwi**: [Simulação Funcionando](https://wokwi.com/projects/445383801865359361)
 
 Acesse a pasta [part1](part1) para mais informações.
 

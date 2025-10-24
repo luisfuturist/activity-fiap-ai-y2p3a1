@@ -1,42 +1,58 @@
 /*
-  CardioIA – Fase IoT (Parte 1): Edge Computing com ESP32 + SPIFFS
-  Objetivo:
-    - Coletar sinais vitais simulados: temperatura/umidade (DHT22) e batimentos (botão).
-    - Armazenar localmente em SPIFFS (resiliência offline).
-    - Ao "voltar online", sincronizar tudo para a "nuvem" (simulada via Serial) e limpar buffer.
+  CardioIA – Fase IoT (Parte 1): Edge Computing com ESP32 + SD Card
+  =================================================================
+  
+  OBJETIVO:
+    Sistema de monitoramento cardíaco com resiliência offline que:
+    - Coleta sinais vitais simulados: temperatura/umidade (DHT22) e batimentos (botão)
+    - Armazena localmente em SD Card (resiliência offline)
+    - Sincroniza automaticamente quando conecta (Edge Computing)
 
-  Hardware (simulado no Wokwi):
+  HARDWARE (simulado no Wokwi):
     - ESP32 DevKit C v4
-    - DHT22 no GPIO 15 (DHT_PIN)
-    - Botão no GPIO 32 (BUTTON_PIN) com INPUT_PULLUP (pressionado = LOW)
+    - DHT22 no GPIO 15 (temperatura e umidade)
+    - Botão no GPIO 32 (simulador de batimentos cardíacos)
+    - SD Card (CS=5, MOSI=23, MISO=19, SCK=18)
 
-  Timers e janelas:
-    - Leitura DHT a cada 2000 ms (2s)
-    - Cálculo de BPM a cada 10000 ms (10s) contando pulsos do botão
-    - Alternância do Wi-Fi simulado a cada 30000 ms (30s)
+  TIMERS E JANELAS:
+    - Leitura DHT: 2000ms (2s) - temperatura e umidade
+    - Cálculo BPM: 10000ms (10s) - conta pulsos do botão
+    - Alternância WiFi: 30000ms (30s) - simula conectividade
 
-  Armazenamento (SPIFFS):
-    - /sensor_data.json  -> arquivo texto com UMA linha JSON por amostra
-    - /sample_count.txt  -> persiste quantidade de amostras acumuladas
-    - Limite: 100 amostras (estratégia FIFO usando "circular buffer")
+  ARMAZENAMENTO (SD Card):
+    - /sensor_data.json  -> JSON por linha (append mode)
+    - /sample_count.txt  -> contador persistido
+    - Limite: 100 amostras (buffer circular FIFO)
 
-  Fluxo de conectividade (simulado com isConnected):
-    - isConnected = false  -> coleta e grava localmente (Edge first)
-    - isConnected = true   -> envia amostras (Serial como "cloud") e remove do SPIFFS (flush)
+  FLUXO DE CONECTIVIDADE:
+    - OFFLINE (isConnected=false): coleta e armazena localmente
+    - ONLINE (isConnected=true): envia direto + sincroniza dados acumulados
 
-  Como validar rapidamente:
-    1) Rodar com isConnected=false (ou aguardar o toggle) e ver acumular amostras no Serial.
-    2) Quando isConnected=true, observar "Sending..." e, ao final, "Synced ... data points" e arquivo limpo.
+  COMO TESTAR:
+    1) Aguarde modo offline e veja acúmulo: "💾 Stored locally (X/100)"
+    2) Pressione botão para simular batimentos: "❤️ Beat: X"
+    3) Aguarde conexão WiFi: "📡 WiFi: CONNECTED"
+    4) Observe sincronização: "🔄 Syncing X samples..."
+    5) Confirme limpeza: "✅ Synced X samples - local storage cleared"
+
+
 */
 
 #include <DHT.h>
-#include <SPIFFS.h>
+#include <SD.h>
+#include <SPI.h>
 #include <ArduinoJson.h>
 
 // --------- Mapa de pinos e tipos de sensor ---------
 #define DHT_PIN 15
 #define DHT_TYPE DHT22
 #define BUTTON_PIN 32
+
+// --------- Configuração de pinos do SD Card ---------
+#define SD_CS 5
+#define SD_MOSI 23
+#define SD_MISO 19
+#define SD_SCK 18
 
 DHT dht(DHT_PIN, DHT_TYPE);
 
@@ -61,35 +77,50 @@ bool isConnected = false;                        // Estado atual (simulado)
 unsigned long lastWifiToggle = 0;
 const unsigned long wifiToggleInterval = 30000;  // Alterna a cada 30s para simulação
 
-// --------- Armazenamento (SPIFFS) ---------
+// --------- Status do SD Card ---------
+bool sdCardAvailable = false;                    // Flag para indicar se SD card está disponível
+
+// --------- Armazenamento (SD Card) ---------
 const int MAX_STORED_SAMPLES = 100;              // Limite de amostras (FIFO/circular buffer)
 int currentSampleCount = 0;                      // Contador persistido em arquivo
 const char* DATA_FILE = "/sensor_data.json";     // Um JSON por linha (append)
 
 
 // ------------------------------------------------------------------
-// setup(): inicializa Serial, sensores e SPIFFS; carrega contador e
+// setup(): inicializa Serial, sensores e SD Card; carrega contador e
 //          inicia no modo "desconectado" para demonstrar resiliência.
 // ------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
-
+  delay(100);
+  
+  Serial.println("🚀 CardioIA System Starting...");
+  
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   dht.begin();
-
-  // Monta o sistema de arquivos SPIFFS (true = formata se necessário)
-  if (!SPIFFS.begin(true)) {
-    Serial.println("❌ SPIFFS Mount Failed");
-    return;
+  SPI.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
+  
+  if (!SD.begin(SD_CS)) {
+    Serial.println("❌ SD Card Failed - Simulation Mode");
+    sdCardAvailable = false;
+  } else {
+    Serial.println("✅ SD Card Ready");
+    sdCardAvailable = true;
   }
-  Serial.println("✅ SPIFFS Mounted Successfully");
 
-  // Começa em modo "offline" (simulação)
   isConnected = false;
-  Serial.println("📡 WiFi Status: DISCONNECTED (Simulation Mode)");
-
-  // Recupera quantas amostras já estavam acumuladas (após reset)
+  Serial.println("📡 WiFi: DISCONNECTED");
+  
   loadSampleCount();
+  
+  lastDhtRead = 0;
+  lastBeatCalc = 0;
+  lastWifiToggle = 0;
+  beatCount = 0;
+  bpm = 0;
+  
+  Serial.println("✅ System Ready - DHT: 2s, BPM: 10s, WiFi: 30s");
+  Serial.println("=========================================");
 }
 
 
@@ -102,15 +133,15 @@ void setup() {
 // ------------------------------------------------------------------
 void loop() {
   unsigned long now = millis();
+  static unsigned long lastDebugTime = 0;
+  const unsigned long debugInterval = 10000; // Status a cada 10 segundos
 
   // --- 1) Simula alternância de Wi-Fi (online/offline) ---
   if (now - lastWifiToggle >= wifiToggleInterval) {
     isConnected = !isConnected;
     lastWifiToggle = now;
-    Serial.print("📡 WiFi Status: ");
-    Serial.println(isConnected ? "CONNECTED" : "DISCONNECTED");
+    Serial.println("📡 WiFi: " + String(isConnected ? "CONNECTED" : "DISCONNECTED"));
 
-    // Se acabamos de conectar, sincroniza tudo que estava armazenado
     if (isConnected) {
       syncStoredData();
     }
@@ -118,8 +149,8 @@ void loop() {
 
   // --- 2) Leitura do botão com debounce para contar "batimentos" ---
   int reading = digitalRead(BUTTON_PIN);
+  
   if (reading != lastButtonState) {
-    // Bordas provocam reinício do cronômetro de debounce
     lastDebounceTime = now;
   }
 
@@ -129,7 +160,7 @@ void loop() {
       buttonState = reading;
       if (buttonState == LOW) { // Pressionado (puxado para GND)
         beatCount++;
-        Serial.println("❤️ Heartbeat detected");
+        Serial.println("❤️ Beat: " + String(beatCount) + " (" + String((now - lastBeatCalc)/1000) + "s)");
       }
     }
   }
@@ -137,12 +168,10 @@ void loop() {
 
   // --- 3) Cálculo de BPM ao final de cada janela (heartbeatInterval) ---
   if (now - lastBeatCalc >= heartbeatInterval) {
-    // bpm = pulsos_na_janela * (60s / janela_em_ms)
     bpm = (beatCount * 60000UL) / heartbeatInterval;
     beatCount = 0;
     lastBeatCalc = now;
-    Serial.print("BPM: ");
-    Serial.println(bpm);
+    Serial.println("💓 BPM: " + String(bpm));
   }
 
   // --- 4) Leitura periódica do DHT22 e persistência da amostra ---
@@ -153,18 +182,17 @@ void loop() {
     float hum  = dht.readHumidity();    // %
 
     if (isnan(temp) || isnan(hum)) {
-      // Leitura inválida (sensor pode falhar eventualmente)
-      Serial.println("⚠️ Failed to read from DHT sensor!");
+      Serial.println("⚠️ DHT Read Failed");
     } else {
-      Serial.print("Temp: ");
-      Serial.print(temp);
-      Serial.print(" °C, Hum: ");
-      Serial.print(hum);
-      Serial.println(" %");
-
-      // Persiste a amostra (sempre grava localmente para garantir resiliência)
+      Serial.println("🌡️ Measured: " + String(temp, 1) + "°C " + String(hum, 1) + "% BPM:" + String(bpm));
       storeSensorData(temp, hum, bpm);
     }
+  }
+  
+  // Status periódico
+  if (now - lastDebugTime >= debugInterval) {
+    Serial.println("📊 Status: WiFi: " + String(isConnected ? "ON" : "OFF") + " Samples:" + String(currentSampleCount) + "/" + String(MAX_STORED_SAMPLES));
+    lastDebugTime = now;
   }
 }
 
@@ -192,30 +220,37 @@ void storeSensorData(float temperature, float humidity, int heartRate) {
   String jsonString;
   serializeJson(doc, jsonString);
 
-  // Gravação local (Edge first): sempre tentamos armazenar
-  if (currentSampleCount < MAX_STORED_SAMPLES) {
-    File file = SPIFFS.open(DATA_FILE, "a"); // append preserva histórico
-    if (file) {
-      file.println(jsonString);
-      file.close();
-      currentSampleCount++;
-      saveSampleCount(); // persiste o contador (sobrevive a resets)
-      Serial.println("💾 Data stored locally (Edge Computing)");
-    } else {
-      Serial.println("❌ Failed to open file for writing");
-    }
-  } else {
-    // Limite atingido: aplica FIFO removendo a linha mais antiga
-    Serial.println("⚠️ Storage limit reached - implementing circular buffer");
-    implementCircularBuffer(jsonString);
-    // Mantém contador consistente no limite
-    currentSampleCount = MAX_STORED_SAMPLES;
-    saveSampleCount();
-  }
-
-  // Se online, tenta enviar imediatamente (nesta fase via Serial)
+  // Se conectado, envia direto para a nuvem (não armazena localmente)
   if (isConnected) {
     sendDataToCloud(jsonString);
+    return;
+  }
+
+  // Se desconectado, armazena localmente (Edge first)
+  if (sdCardAvailable) {
+    if (currentSampleCount < MAX_STORED_SAMPLES) {
+      File file = SD.open(DATA_FILE, FILE_APPEND); // append preserva histórico
+      if (file) {
+        file.println(jsonString);
+        file.close();
+        currentSampleCount++;
+        saveSampleCount(); // persiste o contador (sobrevive a resets)
+        Serial.println("💾 Stored locally (" + String(currentSampleCount) + "/" + String(MAX_STORED_SAMPLES) + ")");
+      } else {
+        Serial.println("❌ Storage Failed");
+      }
+    } else {
+      // Limite atingido: aplica FIFO removendo a linha mais antiga
+      Serial.println("🔄 Circular Buffer");
+      implementCircularBuffer(jsonString);
+      // Mantém contador consistente no limite
+      currentSampleCount = MAX_STORED_SAMPLES;
+      saveSampleCount();
+    }
+  } else {
+    // SD Card não disponível - apenas simula o armazenamento
+    Serial.println("💾 Simulated: " + jsonString);
+    currentSampleCount++;
   }
 }
 
@@ -228,9 +263,13 @@ void storeSensorData(float temperature, float humidity, int heartRate) {
     - Observação: para volumes maiores, prefira rotação de arquivos.
 */
 void implementCircularBuffer(String newData) {
+  if (!sdCardAvailable) {
+    return;
+  }
+
   // Lê conteúdo atual
   String allData = "";
-  File file = SPIFFS.open(DATA_FILE, "r");
+  File file = SD.open(DATA_FILE, FILE_READ);
   if (file) {
     allData = file.readString();
     file.close();
@@ -246,13 +285,10 @@ void implementCircularBuffer(String newData) {
   allData += newData + "\n";
 
   // Regrava o arquivo com as linhas já rotacionadas
-  file = SPIFFS.open(DATA_FILE, "w");
+  file = SD.open(DATA_FILE, FILE_WRITE);
   if (file) {
     file.print(allData);
     file.close();
-    Serial.println("🔄 Circular buffer updated");
-  } else {
-    Serial.println("❌ Failed to rewrite data file");
   }
 }
 
@@ -264,34 +300,73 @@ void implementCircularBuffer(String newData) {
     - Pequeno delay entre envios para simular latência.
 */
 void syncStoredData() {
-  Serial.println("🔄 Syncing stored data to cloud...");
+  Serial.println("🔄 Syncing " + String(currentSampleCount) + " samples...");
 
-  File file = SPIFFS.open(DATA_FILE, "r");
+  if (!sdCardAvailable) {
+    Serial.println("❌ No SD Card available");
+    return;
+  }
+
+  File file = SD.open(DATA_FILE, FILE_READ);
   if (!file) {
-    Serial.println("❌ No stored data to sync");
+    Serial.println("❌ No data to sync");
     return;
   }
 
   int syncedCount = 0;
-  while (file.available()) {
-    String line = file.readStringUntil('\n');
-    line.trim();
-    if (line.length() > 0) {
-      sendDataToCloud(line); // nesta fase, apenas imprime no Serial
-      syncedCount++;
-      delay(100);            // pequena pausa para simular rede/processamento
-    }
-  }
+  Serial.println("📤 Reading all stored data for batch sync...");
+  
+  // Lê todo o conteúdo do arquivo primeiro
+  String fileContent = file.readString();
   file.close();
-
-  // Limpa o arquivo após sincronização bem-sucedida
+  
+  Serial.println("📄 File content length: " + String(fileContent.length()));
+  Serial.println("📄 File content preview: " + fileContent.substring(0, min(200, (int)fileContent.length())));
+  
+  // Conta linhas e prepara dados em lote
+  int startPos = 0;
+  int endPos = 0;
+  String batchData = "[";
+  bool firstEntry = true;
+  
+  // Processa cada linha do arquivo
+  while (startPos < fileContent.length()) {
+    endPos = fileContent.indexOf('\n', startPos);
+    if (endPos == -1) {
+      endPos = fileContent.length();
+    }
+    
+    String line = fileContent.substring(startPos, endPos);
+    line.trim();
+    
+    if (line.length() > 0) {
+      if (!firstEntry) {
+        batchData += ",";
+      }
+      batchData += line;
+      firstEntry = false;
+      syncedCount++;
+    }
+    
+    startPos = endPos + 1;
+  }
+  
+  batchData += "]";
+  
   if (syncedCount > 0) {
-    SPIFFS.remove(DATA_FILE);
+    Serial.println("📤 Batch syncing " + String(syncedCount) + " samples...");
+    sendBatchDataToCloud(batchData);
+  }
+
+  if (syncedCount > 0) {
+    Serial.println("🗑️ Removing local file after successful sync...");
+    SD.remove(DATA_FILE);
     currentSampleCount = 0;
     saveSampleCount();
-    Serial.print("✅ Synced ");
-    Serial.print(syncedCount);
-    Serial.println(" data points to cloud");
+    
+    Serial.println("✅ Synced " + String(syncedCount) + " samples - local storage cleared");
+  } else {
+    Serial.println("⚠️ No data was synced");
   }
 }
 
@@ -309,20 +384,40 @@ void sendDataToCloud(String jsonData) {
 }
 
 /*
+  sendBatchDataToCloud():
+    - Envia todos os dados em lote como um array JSON.
+    - Mais eficiente que envios individuais.
+    - Na Parte 2, substituir por HTTP POST com array JSON.
+*/
+void sendBatchDataToCloud(String batchJsonData) {
+  Serial.println("☁️ Batch sending to Cloud:");
+  Serial.println(batchJsonData);
+  Serial.println("✅ Batch transmission completed");
+
+  // Implementação real (Parte 2):
+  //  - HTTP POST com Content-Type: application/json
+  //  - Endpoint: POST /api/sensor-data/batch
+  //  - Payload: array de objetos JSON
+}
+
+/*
   loadSampleCount():
     - Lê de /sample_count.txt o número de amostras armazenadas.
     - Ajuda a manter consistência após resets de energia/reboot.
 */
 void loadSampleCount() {
-  File file = SPIFFS.open("/sample_count.txt", "r");
+  if (!sdCardAvailable) {
+    currentSampleCount = 0;
+    return;
+  }
+
+  File file = SD.open("/sample_count.txt", FILE_READ);
   if (file) {
     currentSampleCount = file.parseInt();
     file.close();
-    Serial.print("📊 Loaded sample count: ");
-    Serial.println(currentSampleCount);
+    Serial.println("📊 Loaded: " + String(currentSampleCount) + " samples");
   } else {
     currentSampleCount = 0;
-    Serial.println("📊 Starting with fresh sample count");
   }
 }
 
@@ -332,11 +427,13 @@ void loadSampleCount() {
     - Usado após cada append/flush para refletir o estado atual.
 */
 void saveSampleCount() {
-  File file = SPIFFS.open("/sample_count.txt", "w");
+  if (!sdCardAvailable) {
+    return;
+  }
+
+  File file = SD.open("/sample_count.txt", FILE_WRITE);
   if (file) {
     file.println(currentSampleCount);
     file.close();
-  } else {
-    Serial.println("❌ Failed to persist sample count");
   }
 }
