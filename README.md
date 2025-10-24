@@ -6,7 +6,7 @@
 
 ## Sobre o Projeto CardioIA
 
-O CardioIA é um projedo simples didático de um sistema de monitoramento cardíaco inteligente que integra conceitos de IoT, computação em nuvem, Edge/Fog Computing e visualização de dados para aplicações em saúde digital.
+O CardioIA é um projeto simples didático de um sistema de monitoramento cardíaco inteligente que integra conceitos de IoT, computação em nuvem, Edge/Fog Computing e visualização de dados para aplicações em saúde digital.
 
 ## Esta Fase 3 - Monitoramento Contínuo
 
@@ -26,7 +26,7 @@ Este repositório contém a implementação da **Fase 3** do projeto CardioIA, f
 
 Desenvolvimento no Wokwi com ESP32, incluindo:
 - ✅ **2 sensores**: DHT22 (temperatura/umidade) + Botão (batimentos cardíacos)
-- ✅ **Armazenamento local no SD Card** com buffer circular (100 amostras)
+- ✅ **Armazenamento local no SPIFFS** com buffer circular (100 amostras)
 - ✅ **Simulação de conectividade Wi-Fi** (alterna a cada 30s)
 - ✅ **Resiliência offline** com sincronização automática
 - ✅ **Sincronização em lote** eficiente quando conecta
@@ -38,10 +38,12 @@ Acesse a pasta [part1](part1) para mais informações.
 ### Parte 2 — Transmissão para nuvem e visualização (Fog/Cloud Computing)
 
 Sistema completo de monitoramento com:
-- Transmissão via MQTT para nuvem
-- Dashboard no Node-RED com visualização em tempo real
-- Alertas automáticos baseados em limites definidos
-- Integração opcional com Grafana Cloud
+- ✅ **Transmissão via MQTT** para HiveMQ Cloud (TLS)
+- ✅ **Dashboard Node-RED** com visualização em tempo real
+- ✅ **Armazenamento offline** com sincronização automática
+- ✅ **Alertas visuais** baseados em limites definidos
+
+**Link Wokwi**: [Simulação Funcionando](https://wokwi.com/projects/445631947081068545)
 
 Acesse a pasta [part2](part2) para mais informações.
 

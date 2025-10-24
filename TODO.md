@@ -9,7 +9,7 @@
 ### Desenvolvimento (MQTT & Node-RED)
 
 - [ ] Configurar um broker MQTT (ex: HiveMQ Cloud).
-- [ ] Modificar código do ESP32 (Wokwi) para enviar dados (dos 2 sensores) via MQTT para o broker.
+- [ ] Escrever código do ESP32 (Wokwi) que envia dados (dos 2 sensores) via MQTT para o broker.
 - [ ] Configurar o Node-RED.
 - [ ] Criar fluxo no Node-RED para subscrever aos tópicos MQTT.
 - [ ] Montar dashboard no Node-RED:
@@ -29,28 +29,3 @@
     - [ ] Descrever o fluxo de comunicação MQTT (broker, tópicos, publicador, subscritor).
     - [ ] Detalhar a configuração do dashboard no Node-RED.
     - [ ] Explicar como os alertas foram configurados.
-
-## IR ALÉM 1 – Comunicação com REST e E-mail (Opcional)
-
-- [ ] Desenvolver script em Python.
-- [ ] Implementar cliente REST para enviar dados (simulando o ESP32) para uma API (pode ser mockada ou simples).
-- [ ] Implementar cliente REST para consumir dados da API.
-- [ ] Implementar lógica de verificação de risco no script (ex: taquicardia, febre, ausência de movimento).
-- [ ] Implementar automação de disparo de e-mail (ex: usando `smtplib`) quando um risco for detectado.
-- [ ] Escrever Relatório (Ir Além 1 - 1 a 2 páginas) descrevendo o fluxo implementado.
-- [ ] Organizar o código Python e o relatório.
-
-## IR ALÉM 2 – IA em Séries Temporais (Opcional)
-
-- [ ] Criar um Notebook Python (Jupyter ou Google Colab).
-- [ ] Obter ou gerar um dataset de séries temporais de sinais vitais.
-- [ ] Implementar um classificador tradicional (ex: Regressão Logística, SVM) para análise.
-- [ ] Implementar uma rede neuromórfica simples (ex: modelo LIF ou FHN).
-- [ ] Treinar e comparar o desempenho dos dois modelos.
-- [ ] Criar repositório GitHub público para o projeto.
-- [ ] Adicionar o Notebook (comentado) ao repositório.
-- [ ] Escrever um `README.md` claro no repositório.
-- [ ] Escrever Relatório Comparativo (Ir Além 2 - 2 páginas) sobre o desempenho dos modelos, vantagens e limitações.
-- [ ] Gravar vídeo de apresentação (máx. 4 minutos) explicando os resultados e a análise.
-- [ ] Fazer upload do vídeo no YouTube (Não Listado).
-- [ ] Adicionar o link do vídeo ao `README.md`.
