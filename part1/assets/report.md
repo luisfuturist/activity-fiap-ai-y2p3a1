@@ -17,33 +17,51 @@ Este relatório descreve a implementação de um sistema de monitoramento cardí
 ### Fluxo de Funcionamento
 
 ```mermaid
-flowchart TD
-    A[DHT22 Sensor<br/>🌡️ Temperature & Humidity] --> B[Data Collection<br/>📊 Every 2 seconds]
-    C[Button Press<br/>❤️ Heartbeat Simulation] --> B
+graph TD
+    A[Start: CardioIA System] --> B[Setup: Initialize Serial, Sensors, SD Card]
+    B --> C[Load Sample Count from /sample_count.txt]
+    B --> D[Set Initial State: Disconnected]
+    B --> E[System Ready]
+
+    E --> F[Main Loop]
+    F -->|Every 30s| G[Toggle WiFi State]
+    G -->|Connected| H[Sync Stored Data]
+    G -->|Disconnected| I[Continue Offline]
     
-    B --> D{WiFi Connected?}
+    F -->|Every 2s| J[Read DHT22: Temp & Humidity]
+    J -->|Valid Data| K[Store Sensor Data]
+    J -->|Invalid Data| L[Log DHT Read Failure]
     
-    D -->|Yes| E[Send to Cloud<br/>☁️ Immediate Sync]
-    D -->|No| F[Store in SD Card<br/>💾 Local Storage]
+    F -->|Button Press| M[Debounce Button]
+    M -->|Valid Press| N[Increment Beat Count]
+    N --> O[Log Beat]
     
-    F --> G{Storage Full?<br/>100 samples}
-    G -->|Yes| H[Circular Buffer<br/>🔄 FIFO Strategy]
-    G -->|No| I[Append Data<br/>📝 JSON Format]
+    F -->|Every 10s| P[Calculate BPM]
+    P --> Q[Reset Beat Count]
+    P --> R[Log BPM]
     
-    H --> I
-    I --> J[Wait for WiFi<br/>⏳ Offline Mode]
+    K -->|Connected| S[Send Data to Cloud]
+    K -->|Disconnected| T[Store Locally in /sensor_data.json]
+    T -->|Samples < 100| U[Append JSON to File]
+    U --> V[Increment Sample Count]
+    V --> W[Save Sample Count]
     
-    K[WiFi Reconnected<br/>📡 Connection Restored] --> L[Sync Stored Data<br/>🔄 Batch Upload]
-    L --> M[Clear Local Storage<br/>🗑️ Clean SD Card]
+    T -->|Samples >= 100| X[Implement Circular Buffer]
+    X --> Y[Remove Oldest Sample]
+    Y --> Z[Append New Sample]
+    Z --> AA[Rewrite File]
+    AA --> W
     
-    E --> N[Data in Cloud<br/>✅ Successfully Synced]
-    M --> N
+    H -->|SD Card Available| AB[Read /sensor_data.json]
+    AB --> AC[Batch Data as JSON Array]
+    AC --> AD[Send Batch Data to Cloud]
+    AD --> AE[Remove Local File]
+    AE --> AF[Reset Sample Count]
+    AF --> AG[Save Sample Count]
+    AF --> AH[Log Sync Completion]
     
-    style A fill:#e1f5fe
-    style C fill:#fce4ec
-    style E fill:#e8f5e8
-    style F fill:#fff3e0
-    style N fill:#f3e5f5
+    H -->|No SD Card| AI[Log No SD Card]
+    AB -->|No Data| AJ[Log No Data to Sync]
 ```
 
 ## Implementação de Resiliência Offline
