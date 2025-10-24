@@ -136,7 +136,6 @@ A integração da **Parte 1 (Edge Computing)** com a **Parte 2 (Transmissão par
 ### 8.1 Conexão com o Broker MQTT
 ![Conexão com Broker MQTT](./broker.jpg)
 
-
 ### 8.2 Terminal CMD - Envio de Dados
 Mostrando ESP32 conectado ao HiveMQ e envio de mensagens JSON.
 ![Terminal CMD](./cmd.jpg)
