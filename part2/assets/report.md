@@ -150,7 +150,7 @@ Exemplo de batimento/temperatura alto, LED vermelho indicando alerta.
 
 ### 8.8 HiveMQ Cloud - Visualização do Broker
 Servidor MQTT com tópicos e dados recebidos.
-![HiveMQ Cloud](assets/hive.jpg)
+![HiveMQ Cloud](/hive.jpg)
 
 
 
