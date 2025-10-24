@@ -122,39 +122,40 @@ A integração da **Parte 1 (Edge Computing)** com a **Parte 2 (MQTT + Node-RED)
 ## 8. Evidências do Sistema
 
 ### 8.1 Conexão com o Broker MQTT
-![Conexão com Broker MQTT](assets/broker_ok.jpg)
+![Conexão com Broker MQTT](broker_ok.jpg)
 
 ### 8.2 Terminal CMD - Envio de Dados
 Mostrando ESP32 conectado ao HiveMQ e envio de mensagens JSON.
-![Terminal CMD](assets/cmd.jpg)
+![Terminal CMD](cmd.jpg)
 
 ### 8.3 Dashboard Node-RED - Valor Normal
 Valor baixo de BPM/Temperatura, LED verde indicando funcionamento normal.
-![Dashboard Normal](assets/dash.jpg)
+![Dashboard Normal](dash.jpg)
 
 ### 8.4 Cenário Offline / Erro de Conexão
 Exemplo de desconexão, erro no MQTT e salvamento de dados localmente.
-![Erro de Conexão](assets/erro.jpg)
+![Erro de Conexão](erro.jpg)
 
 ### 8.5 ESP32 - Visão Geral do Wokwi
 Mostrando dispositivo, serial monitor e fluxo de execução.
-![ESP32 Geral](assets/esp32.jpg)
+![ESP32 Geral](esp32.jpg)
 
 ### 8.6 Fluxo Node-RED
 Exibição do fluxo configurado, incluindo tópicos MQTT e lógica do dashboard.
-![Fluxo Node-RED](assets/fluxo.jpg)
+![Fluxo Node-RED](fluxo.jpg)
 
 ### 8.7 Debug - Dados Recebidos
 Debug mostrando dados JSON recebidos do ESP32 no Node-RED.
-![Debug Node-RED](assets/debu.jpg)
+![Debug Node-RED](debu.jpg)
 
 ### 8.8 Cenário Crítico - Valor Alto
 Exemplo de batimento/temperatura alto, LED vermelho indicando alerta.
-![Alerta Alto](assets/high.jpg)
+![Alerta Alto](high.jpg)
 
 ### 8.9 HiveMQ Cloud - Visualização do Broker
 Servidor MQTT com tópicos e dados recebidos.
-![HiveMQ Cloud](assets/hive.jpg)
+![HiveMQ Cloud](hive.jpg)
+
 
 
 **Desenvolvido por:** Gustavo Castro, Luis Emidio, Ricardo Oliveira
