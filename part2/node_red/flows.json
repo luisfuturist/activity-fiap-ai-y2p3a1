@@ -1,5 +1,197 @@
 [
     {
+        "id": "8c3dfc66cd3f7eb1",
+        "type": "tab",
+        "label": "Fluxo 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9ce769209668ae68",
+        "type": "mqtt in",
+        "z": "8c3dfc66cd3f7eb1",
+        "name": "",
+        "topic": "device1/data",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "c6c04a507260eead",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 430,
+        "y": 380,
+        "wires": [
+            [
+                "2a01b8e9343f9d4e"
+            ]
+        ]
+    },
+    {
+        "id": "2a01b8e9343f9d4e",
+        "type": "function",
+        "z": "8c3dfc66cd3f7eb1",
+        "name": "function 1",
+        "func": "// === Processamento de dados do ESP32 ===\ntry {\n    var data = msg.payload;\n\n    // Se vier como string, faz o parse\n    if (typeof data === \"string\") {\n        data = JSON.parse(data);\n    }\n\n    let temperatura = data.temperature;\n    let bpm = data.bpm;\n\n    // === Limites definidos ===\n    const TEMP_LIMIT = 38.0;\n    const BPM_LIMIT = 120;\n\n    // === Verifica alertas ===\n    let alertaTemp = temperatura > TEMP_LIMIT;\n    let alertaBpm = bpm > BPM_LIMIT;\n\n    // === Saídas ===\n    // 0 → temperatura (chart)\n    // 1 → bpm (gauge)\n    // 2 → LED verde (normal)\n    // 3 → LED vermelho (alerta)\n\n    let msgTemp = { payload: temperatura };\n    let msgBpm = { payload: bpm };\n\n    let ledVerde = { payload: false };\n    let ledVermelho = { payload: false };\n\n    if (alertaTemp || alertaBpm) {\n        ledVermelho.payload = true; // acende vermelho\n    } else {\n        ledVerde.payload = true; // acende verde\n    }\n\n    return [msgTemp, msgBpm, ledVerde, ledVermelho];\n\n} catch (e) {\n    node.warn(\"Erro ao interpretar JSON recebido: \" + e);\n    return null;\n}\n",
+        "outputs": 4,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
+        "y": 380,
+        "wires": [
+            [
+                "231e34a3574ffa4d"
+            ],
+            [
+                "3d7a3f80786a93d5"
+            ],
+            [
+                "ce2cfc8b03483bd6"
+            ],
+            [
+                "54ab87d8a8fe6223"
+            ]
+        ]
+    },
+    {
+        "id": "3d7a3f80786a93d5",
+        "type": "ui_gauge",
+        "z": "8c3dfc66cd3f7eb1",
+        "name": "",
+        "group": "18ce9ca139b623f8",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "BPM",
+        "label": "bpm",
+        "format": "{{value}}",
+        "min": "50",
+        "max": "150",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 890,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "231e34a3574ffa4d",
+        "type": "ui_chart",
+        "z": "8c3dfc66cd3f7eb1",
+        "name": "",
+        "group": "18ce9ca139b623f8",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Temperatura",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "35",
+        "ymax": "40",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#cf2a2a",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 890,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ce2cfc8b03483bd6",
+        "type": "ui_led",
+        "z": "8c3dfc66cd3f7eb1",
+        "order": 3,
+        "group": "18ce9ca139b623f8",
+        "width": 0,
+        "height": 0,
+        "label": "",
+        "labelPlacement": "left",
+        "labelAlignment": "left",
+        "colorForValue": [
+            {
+                "color": "#008000",
+                "value": "true",
+                "valueType": "bool"
+            },
+            {
+                "color": "#808080",
+                "value": "false",
+                "valueType": "bool"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "",
+        "x": 910,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "54ab87d8a8fe6223",
+        "type": "ui_led",
+        "z": "8c3dfc66cd3f7eb1",
+        "order": 3,
+        "group": "18ce9ca139b623f8",
+        "width": 0,
+        "height": 0,
+        "label": "",
+        "labelPlacement": "left",
+        "labelAlignment": "left",
+        "colorForValue": [
+            {
+                "color": "#ff0000",
+                "value": "true",
+                "valueType": "bool"
+            },
+            {
+                "color": "#808080",
+                "value": "false",
+                "valueType": "bool"
+            }
+        ],
+        "allowColorForValueInMessage": false,
+        "shape": "circle",
+        "showGlow": true,
+        "name": "",
+        "x": 910,
+        "y": 500,
+        "wires": []
+    },
+    {
         "id": "425c15499a62716c",
         "type": "debug",
         "z": "8c3dfc66cd3f7eb1",
@@ -15,5 +207,101 @@
         "x": 810,
         "y": 120,
         "wires": []
+    },
+    {
+        "id": "a1d5f558161250d2",
+        "type": "mqtt in",
+        "z": "8c3dfc66cd3f7eb1",
+        "name": "",
+        "topic": "device1/data",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "c6c04a507260eead",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 530,
+        "y": 120,
+        "wires": [
+            [
+                "425c15499a62716c"
+            ]
+        ]
+    },
+    {
+        "id": "c6c04a507260eead",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "57bb796054e7484293ac7c21ac5021e4.s1.eu.hivemq.cloud",
+        "port": "8883",
+        "tls": "806ac0998baf03f4",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": true,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "18ce9ca139b623f8",
+        "type": "ui_group",
+        "name": "Sinais Vitais ",
+        "tab": "96cd3ddb0c9f2bd0",
+        "order": 1,
+        "disp": true,
+        "width": 6,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "806ac0998baf03f4",
+        "type": "tls-config",
+        "name": "",
+        "cert": "",
+        "key": "",
+        "ca": "",
+        "certname": "",
+        "keyname": "",
+        "caname": "",
+        "servername": "",
+        "verifyservercert": true,
+        "alpnprotocol": ""
+    },
+    {
+        "id": "96cd3ddb0c9f2bd0",
+        "type": "ui_tab",
+        "name": "Monitoramento Cardíaco",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "b6e756193e8267a5",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-contrib-ui-led": "0.4.11"
+        }
     }
 ]
